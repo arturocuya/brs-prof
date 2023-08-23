@@ -1,27 +1,27 @@
 package main
 
 import (
-	"os"
 	"bufio"
 	"fmt"
+	"os"
 	"time"
 )
 
 type Header struct {
-	Major uint32
-	Minor uint32
-	Patch uint32
-	Size uint32
-	RequestedSampleRatio float32
-	ActualSampleRation float32
-	IncludesLineData bool
-	IncludesMemOps bool
-	StartTime time.Time
-	ChannelName string
-	SupplementalInfo string
-	ChannelVersion string
-	DeviceVendorName string
-	DeviceModelNumber string
+	Major                 uint32
+	Minor                 uint32
+	Patch                 uint32
+	Size                  uint32
+	RequestedSampleRatio  float32
+	ActualSampleRation    float32
+	IncludesLineData      bool
+	IncludesMemOps        bool
+	StartTime             time.Time
+	ChannelName           string
+	SupplementalInfo      string
+	ChannelVersion        string
+	DeviceVendorName      string
+	DeviceModelNumber     string
 	DeviceFirmwareVersion string
 }
 
@@ -78,8 +78,6 @@ func main() {
 	build, _ := readLEB128(reader)
 	header.Patch = build
 
-
 	fmt.Println(text)
 	fmt.Printf("%+v", header)
 }
-
