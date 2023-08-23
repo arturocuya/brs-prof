@@ -13,7 +13,7 @@ type Header struct {
 	Patch                 uint32
 	Size                  uint32
 	RequestedSampleRatio  float32
-	ActualSampleRation    float32
+	ActualSampleRatio     float32
 	IncludesLineData      bool
 	IncludesMemOps        bool
 	StartTime             time.Time
@@ -23,32 +23,6 @@ type Header struct {
 	DeviceVendorName      string
 	DeviceModelNumber     string
 	DeviceFirmwareVersion string
-}
-
-func readLEB128(reader *bufio.Reader) (uint32, error) {
-	var result uint32
-	var shift uint
-
-	for {
-		// Read a byte
-		b, err := reader.ReadByte()
-		if err != nil {
-			return 0, err
-		}
-
-		// Extract the 7 lower bits
-		value := uint32(b & 0x7F)
-		result |= value << shift
-
-		// Check if the high bit is set
-		if (b & 0x80) == 0 {
-			break
-		}
-
-		shift += 7
-	}
-
-	return result, nil
 }
 
 func main() {
@@ -62,22 +36,73 @@ func main() {
 
 	reader := bufio.NewReader(file)
 
-	data := make([]byte, 8)
-
-	bytesRead, err := reader.Read(data)
+	// Discard magic bytes
+	_, err = reader.Read(make([]byte, 8))
 	if err != nil {
 		panic(err)
 	}
 
-	text := string(data[:bytesRead])
+	if err = ReadUInt32(reader, &header.Major); err != nil {
+		panic(err)
+	}
 
-	major, _ := readLEB128(reader)
-	header.Major = major
-	minor, _ := readLEB128(reader)
-	header.Minor = minor
-	build, _ := readLEB128(reader)
-	header.Patch = build
+	if err = ReadUInt32(reader, &header.Minor); err != nil {
+		panic(err)
+	}
 
-	fmt.Println(text)
+	if err = ReadUInt32(reader, &header.Patch); err != nil {
+		panic(err)
+	}
+
+	if err = ReadUInt32(reader, &header.Size); err != nil {
+		panic(err)
+	}
+
+	if err = ReadFloat32(reader, &header.RequestedSampleRatio); err != nil {
+		panic(err)
+	}
+
+	if err = ReadFloat32(reader, &header.ActualSampleRatio); err != nil {
+		panic(err)
+	}
+
+	if err = ReadBool(reader, &header.IncludesLineData); err != nil {
+		panic(err)
+	}
+
+	if err = ReadBool(reader, &header.IncludesMemOps); err != nil {
+		panic(err)
+	}
+
+	var timestampUInt uint64
+	if err = ReadUInt64(reader, &timestampUInt); err != nil {
+		panic(err)
+	}
+	header.StartTime = time.Unix(int64(timestampUInt), 0) 
+
+	if err = ReadUtf8z(reader, &header.ChannelName); err != nil {
+		panic(err)
+	}
+
+	if err = ReadUtf8z(reader, &header.SupplementalInfo); err != nil {
+		panic(err)
+	}
+
+	if err = ReadUtf8z(reader, &header.ChannelVersion); err != nil {
+		panic(err)
+	}
+
+	if err = ReadUtf8z(reader, &header.DeviceVendorName); err != nil {
+		panic(err)
+	}
+
+	if err = ReadUtf8z(reader, &header.DeviceModelNumber); err != nil {
+		panic(err)
+	}
+
+	if err = ReadUtf8z(reader, &header.DeviceFirmwareVersion); err != nil {
+		panic(err)
+	}
+
 	fmt.Printf("%+v", header)
 }
